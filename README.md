@@ -20,7 +20,7 @@ This will probably take around 15 minutes.
 ### Create a CA
 
 ```
-$ penssl genrsa -out ca.key 2048
+$ openssl genrsa -out ca.key 2048
 $ openssl req -x509 -new -nodes -key ca.key -days 100000 -out ca.crt -subj "/CN=admission_ca"
 ```
 
@@ -44,16 +44,82 @@ $ openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out
 
 ## Deploy Resources
 
+### Create the webhook configuration
+
+```
+$ cat > webhook-configuration.yaml <<EOF
+kind: ValidatingWebhookConfiguration
+apiVersion: admissionregistration.k8s.io/v1beta1
+metadata:
+  name: opa-validating-webhook
+  namespace: opa
+  labels:
+    app: opa
+webhooks:
+  - name: validating-webhook.openpolicyagent.org
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["*"]
+        apiVersions: ["*"]
+        resources:
+          - pods
+          - services
+          - replicasets
+          - deployments
+          - daemonsets
+          - cronjobs
+          - jobs
+          - ingresses
+          - roles
+          - statefulsets
+          - podtemplates
+          - configmaps
+          - secrets
+    clientConfig:
+      caBundle: $(cat ca.crt | base64 | tr -d '\n')
+      service:
+        namespace: opa
+        name: opa
+    namespaceSelector:
+      matchExpressions:
+      - {key: opa-webhook, operator: NotIn, values: [ignore]}
+EOF
+```
+
+### Create the OPA namespace
+
 ```
 $ kubectl create namespace opa
 $ kubectl config set-context --namespace opa --current
+```
+
+### Create the secret
+
+```
 $ kubectl create secret tls opa-server --cert=server.crt --key=server.key
+```
+
+### Deploy the admission controller
+
+```
 $ kubectl apply -f admission-controller.yaml
+```
+
+Wait until the resources become ready. You can use `kubectl get all` for checking the status.
+
+### Deploy the webhook configuration
+
+```
 $ kubectl apply -f webhook-configuration.yaml
+```
+
+### Deploy the ConfigMap containing your OPA policy in Rego
+
+```
 $ kubectl create configmap image-source --from-file=image_source.rego
 ```
 
-Check OPA configuration
+### Check OPA configuration
 
 ```
 $ kubectl get configmap image-source -o jsonpath="{.metadata.annotations}"
