@@ -113,24 +113,29 @@ Wait until the resources become ready. You can use `kubectl get all` for checkin
 $ kubectl apply -f webhook-configuration.yaml
 ```
 
-### Deploy the ConfigMap containing your OPA policy in Rego
+### Deploy the ConfigMaps  containing your OPA policies in Rego
 
 ```
-$ kubectl create configmap image-source --from-file=image_source.rego
+$ kubectl create configmap image-source --from-file=policies/image-source.rego
+$ kubectl create configmap ingress-sg --from-file=policies/ingress-sg.rego
 ```
 
 ### Check OPA configuration
 
 ```
 $ kubectl get configmap image-source -o jsonpath="{.metadata.annotations}"
-map[openpolicyagent.org/policy-status (http://openpolicyagent.org/policy-status):{"status":"ok"}]
+map[openpolicyagent.org/policy-status:{"status":"ok"}]
+$ kubectl get configmap ingress-sg -o jsonpath="{.metadata.annotations}"
+map[openpolicyagent.org/policy-status:{"status":"ok"}]
 ```
 
-## Test Policy
+## Test Policies
 
 ```
 $ kubectl apply -f nginx.yaml
 Error from server (pod "nginx" has invalid registry "nginx"): error when creating "nginx.yaml": admission webhook "validating-webhook.openpolicyagent.org" denied the request: pod "nginx" has invalid registry "nginx"
+$ kubectl apply  -f ingress.yaml
+Error from server (Compliance check failed: CISO-01: Application Load Balancers must use 'internal' scheme): error when creating "ingress.yaml": admission webhook "validating-webhook.openpolicyagent.org" denied the request: Compliance check failed: CISO-01: Application Load Balancers must use 'internal' scheme
 ```
 
 ## Clean Up
