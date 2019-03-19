@@ -1,0 +1,31 @@
+---
+apiVersion: eksctl.io/v1alpha4
+kind: ClusterConfig
+
+metadata:
+  name: opa
+  region: eu-west-1
+
+vpc:
+  id: "vpc-xxx"  # (optional, must match VPC ID used for each subnet below)
+  cidr: "x.x.x.x/x"       # (optional, must match CIDR used by the given VPC)
+  subnets:
+    # must provide 'private' and/or 'public' subnets by availibility zone as shown
+    private:
+      eu-west-1a:
+        id: "subnet-xxx"
+        cidr: "x.x.x.x/x" # (optional, must match CIDR used by the given subnet)
+
+      eu-west-1b:
+        id: "subnet-xxx"
+        cidr: "x.x.x.x/x"  # (optional, must match CIDR used by the given subnet)
+
+      eu-west-1c:
+        id: "subnet-xxx"
+        cidr: "x.x.x.x/x"   # (optional, must match CIDR used by the given subnet)
+
+nodeGroups:
+  - name: ng-1
+    instanceType: m5.xlarge
+    desiredCapacity: 2
+    privateNetworking: true # if only 'Private' subnets are given, this must be enabled
