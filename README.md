@@ -129,7 +129,7 @@ $ kubectl get configmap ingress-sg -o jsonpath="{.metadata.annotations}"
 map[openpolicyagent.org/policy-status:{"status":"ok"}]
 ```
 
-## Test Policies
+## Test Policies / Interesting Stuff
 
 ```
 $ kubectl apply -f nginx.yaml
